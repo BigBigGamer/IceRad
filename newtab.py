@@ -9,12 +9,12 @@ df = pd.read_csv('planet_okh_20180305_pl_a.txt',sep=';')
 # create new figure, axes instances.
 # Tk().withdraw()
 # pathNS = fd.askdirectory() 
-pathNS = 'E:/Work/GitHub/iceRad/DataProcessing/Hydro/NS/m03y2018/d05m03y2018S203654'
+pathNS = 'DataProcessing/Hydro/NS/m03y2018/d05m03y2018S203654'
 LaNS = np.loadtxt(pathNS+'\LaKu.txt')     
 LoNS =  np.loadtxt(pathNS+'\LoKu.txt')  
 sigNS =  np.loadtxt(pathNS+'\sigKu.txt') 
 extent = [ 120,130,50,60 ] 
-fig=plt.figure()
+fig=plt.figure(figsize = (8,6))
 ax=fig.add_axes([0.1,0.1,0.8,0.8])
 # setup mercator map projection.
 m = Basemap(llcrnrlon=130.,llcrnrlat=40.,urcrnrlon=160.,urcrnrlat=65.,\
@@ -30,10 +30,10 @@ m.drawparallels(np.arange(40,60,10),labels=[1,1,0,1])
 m.drawmeridians(np.arange(130,150,10),labels=[1,1,0,1])
 x, y = m(df['Lon'].values.tolist(),df['Lat'].values.tolist())
 xm,ym = m(LoNS,LaNS)
-m.pcolormesh(xm,ym,sigNS)
-m.scatter(xm,ym,5,sigNS, marker = '.',alpha =0.9,cmap = 'ocean')
+m.pcolormesh(xm,ym,sigNS,cmap = 'jet')
+m.scatter(xm,ym,5,sigNS, marker = '.',alpha =0.9,cmap = 'jet')
 # m.imshow(sigNS,extent=extent, alpha=0.6)
-m.plot(x,y,'.',markersize = 0.5,color='r')
+m.plot(x,y,'.',markersize = 0.3,color='r')
 plt.show()
-plt.savefig('map.png')
+# fig.savefig('map.png',dpi = 1000)
 
