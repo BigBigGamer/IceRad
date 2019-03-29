@@ -1,4 +1,4 @@
-Программа для исследования методов детектирования ледовых покровов по данным спутника GPM.
+﻿Программа для исследования методов детектирования ледовых покровов по данным спутника GPM.
 
 Основная программа находится в папке IceScanner, - IceScanner.py, там же лежат тестовые данные
 
@@ -17,4 +17,4 @@ What is needed to run the main script:
   
   -tkinter
   
-These are crutial and the script won't run without them
+These are crutial and the script won't run without them.
