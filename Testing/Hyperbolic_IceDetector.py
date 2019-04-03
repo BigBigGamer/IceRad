@@ -3,10 +3,9 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 # pathNS = 'E:\Work\GitHub\IceRad\Testing\d01m01y2017S003600'
-# pathNS = 'E:\Work\GitHub\IceRad\Testing\d27m12y2016S014815'
+pathNS = 'E:\Work\GitHub\IceRad\Testing\d27m12y2016S014815'
 # pathNS = 'E:\Work\GitHub\IceRad\Testing\d03m01g17S172400'
 # pathNS = 'E:\Work\GitHub\IceRad\Testing\d31m03y2017S213254'
-pathNS = 'E:\Work\GitHub\IceRad\Testing\d25m03y2017S002625'
 
 
 # File reading
