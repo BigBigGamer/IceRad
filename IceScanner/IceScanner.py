@@ -52,22 +52,27 @@ class IceScanner(tk.Tk):
         mainwindow.grid_rowconfigure(0,weight=1)
         mainwindow.grid_columnconfigure(0,weight=1)
 
+
 class ToolSet(tk.Frame):
     
     def __init__(self,parent,controller):
         tk.Frame.__init__(self,parent)
         self.controller = controller
         self.loaded = False
+        # elements
         self.LoadButton = ttk.Button(self, text = 'Load', command = self.loader )
         self.DetectButton = ttk.Button(self, text = 'Detect', command = self.ice_detection )
         self.TrackButton = ttk.Button(self, text = 'Show track', command = self.controller.graphs.show_tracks )
         self.MassButton = ttk.Button(self, text = 'Mass detect', command = self.mass_detection )
+        self.VerifyButton = ttk.Button(self, text = 'Verify results', command = self.verification )
         self.LoadLabel = ttk.Label(self,text = 'Load files')
         self.StatusLabel = ttk.Label(self,text = 'Awaiting commands')
+        # packing
         self.LoadLabel.grid(row = 0, column= 1)
         self.StatusLabel.grid(row = 0, column= 2)
         self.LoadButton.grid(row = 0, column = 0, padx=10, pady=10)
-        self.MassButton.grid(row = 2, column = 3, padx=10, pady=10)
+        self.MassButton.grid(row = 2, column = 2, padx=10, pady=10)
+        self.VerifyButton.grid(row = 2, column = 3, padx=10, pady=10)
         self.DetectButton.grid(row = 2, column = 0, padx=10, pady=10)
         self.TrackButton.grid(row = 2, column = 1, padx=10, pady=10)
     
@@ -253,7 +258,7 @@ class ToolSet(tk.Frame):
                 # fname = pathNS[len(pathNS) - 18:-1]
                 fname = pathNS[len(pathNS) - 15:-1]
 
-                file = open(savepath + fname + '.txt','w+')
+                file = open(savepath + fname + '.tsv','w+')
                 file.write("La\tLo\tSig\tTheta\tIce")
                 LaNS_f = LaNS.flatten()
                 LoNS_f = LoNS.flatten()
@@ -262,8 +267,7 @@ class ToolSet(tk.Frame):
                 nMap_f = nMap.flatten()
 
                 for i in range(0,len(LaNS_f)):
-                    if nMap_f[i] > 0:
-                        file.write('\n%f\t'%LaNS_f[i]+'%f\t'%LoNS_f[i]+'%f\t'%sigNS_f[i]+'%f\t'%thetaNS_f[i]+'%d'%nMap_f[i])                 
+                    file.write('\n%f\t'%LaNS_f[i]+'%f\t'%LoNS_f[i]+'%f\t'%sigNS_f[i]+'%f\t'%thetaNS_f[i]+'%d'%nMap_f[i])                 
 
                 file.close()
                 print('Done another!')
@@ -272,6 +276,12 @@ class ToolSet(tk.Frame):
             
         print('All done!')    
 
+
+    def verification(self):
+        if not(self.controller.loaded):
+            tk.messagebox.showerror('Error', 'No data was loaded')
+        else:
+            pass
 
                       
 class GraphSet(tk.Frame):
