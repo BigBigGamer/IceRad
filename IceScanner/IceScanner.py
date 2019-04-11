@@ -182,7 +182,7 @@ class ToolSet(tk.Frame):
         for i,j,k in os.walk(FolderPath):
             folders.append(i)
         folders.pop(0)
-        print(folders)
+        # print(folders)
         savepath = fd.askdirectory(title = 'Choose where to save the maps')
         MonthYear = FolderPath[len(FolderPath) - 8:len(FolderPath)]
         try:

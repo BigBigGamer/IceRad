@@ -10,7 +10,7 @@ import matplotlib.path as mplPath
 import pyproj
 import pycrs
 
-show_map = 'Yes'    
+show_map = 'No'    
 
 #reading shapefile
 sf = shapefile.Reader('2017 03 28\planet_okh_20170328_pl_a.shp')
