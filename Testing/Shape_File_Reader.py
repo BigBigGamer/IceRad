@@ -10,12 +10,12 @@ import matplotlib.path as mplPath
 import pyproj
 import pycrs
 
-show_map = 'No'    
+show_map = 'Yes'    
 
 #reading shapefile
-sf = shapefile.Reader('2017 03 28\planet_okh_20170328_pl_a.shp')
+sf = shapefile.Reader('2017 03 28\planet_okh_20170328_pl_a.shp') # указать путь к shape файлу
 #reading projection file
-crs = pycrs.load.from_file('2017 03 28\planet_okh_20170328_pl_a.prj')
+crs = pycrs.load.from_file('2017 03 28\planet_okh_20170328_pl_a.prj') # указать путьь к файлу проекции
 shp_proj = pyproj.Proj(crs.to_proj4()) #.shp file projection
 std_proj = pyproj.Proj(init = 'epsg:4326') # Lat/Lon system
 

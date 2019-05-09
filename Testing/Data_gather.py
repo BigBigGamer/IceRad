@@ -36,43 +36,47 @@ def getShapeIndex(sf,crs, keyword = '09'):
     std_proj = pyproj.Proj(init = 'epsg:4326') # Lat/Lon system
     # print('Coordinates re-calculation:')
     for i in range(0,length):
-        if records[i]['POLY_TYPE'] == 'I':
+        # if records[i]['POLY_TYPE'] == 'I':
             # if records[i]['COLORSA'] == keyword:
                 # x,y = shapes[i].points[0]
                 # lo,la = pyproj.transform(shp_proj,std_proj,x,y)
-            ice_shapes_ind.append(i)
+        ice_shapes_ind.append(i)
     return ice_shapes_ind
 
-
+def getFolders(folder_path):
+    folders = []
+    for i,j,k in os.walk(folder_path):
+        folders.append(i)
+    folders.pop(0)
+    return folders
 # FolderPath = fd.askdirectory(title = 'Choose a month folder to look for data')
 # SaveFilePath = fd.askdirectory(title = 'Where to save to?')
-FolderPath = r'E:\Work\GitHub\IceRad_Data\PROCESSED_Data\Hydro\NS\m03y2017'
+FolderPath = r'E:\Work\GitHub\IceRad_Data\PROCESSED_Data\Hydro\NS\m08y2017'
 SaveFilePath = r'E:\Work\GitHub\IceRad_Data\PROCESSED_Data\IceMaps'
-
-folders = []
-for i,j,k in os.walk(FolderPath):
-    folders.append(i)
-folders.pop(0)
+folders = getFolders(FolderPath) 
+# folders = []
+# for i,j,k in os.walk(FolderPath):
+#     folders.append(i)
+# folders.pop(0)
 # print(folders)
 MonthYear = FolderPath[len(FolderPath) - 8:len(FolderPath)]
 print(MonthYear)
-filename = SaveFilePath + '\Ice Data.hdf5'
+filename = SaveFilePath + '\Ice Data08.hdf5'
 f = hdf.File(filename,'w')
 group = f.create_group(MonthYear)
-# dset2 = group.create_dataset('d01m01y2016',(100,100),dtype = 'f')
-
 
 # Shape-file searching
-shapes_folder = r'E:\Work\GitHub\IceRad_Data\PROCESSED_Data\Planets_files\2017'
-shapes_folders = []
-for i,j,k in os.walk(shapes_folder):
-    shapes_folders.append(i)
-shapes_folders.pop(0)
+shapes_folder_path = r'E:\Work\GitHub\IceRad_Data\PROCESSED_Data\Planets_files\2017'
+shapes_folders = getFolders(shapes_folder_path)
+# shapes_folders = []
+# for i,j,k in os.walk(shapes_folder):
+#     shapes_folders.append(i)
+# shapes_folders.pop(0)
 # print(shapes_folders)
 
 ## _dataset_ = [[_LaNS_],[_LoNS_],[_SigNS_],[_thetaNS_]]
 _dataset_ = np.array([[],[],[],[]])
-_idset_ = np.array([[],[],[]])
+_idset_ = np.array([[],[],[],[]])
 FirstTime = True
 previous_day = 1
 for currentFolder in folders:
@@ -80,7 +84,7 @@ for currentFolder in folders:
     # print('currentFolder = %s'%currentFolder)
     data_id = currentFolder[len(currentFolder) - 16:len(currentFolder)]
     day = int( data_id[1:3] )
-    month = 3 ## walking stick
+    month = 8 ## walking stick
 
     if day is not previous_day:
         # if not FirstTime:
@@ -93,9 +97,9 @@ for currentFolder in folders:
             _dataset_ = np.array([[],[],[],[]])
             # print(_dataset_.size)
             shape = _idset_.shape
-            data_ids = group.create_dataset(prev_data_id[0:11]+'_ID',(3,shape[1]),data = _idset_,dtype = 'S10')
-            data_ids.attrs['Structure'] = 'Poly_ID, Poly_Color, Track'
-            _idset_ = np.array([[],[],[]])    
+            data_ids = group.create_dataset(prev_data_id[0:11]+'_ID',(4,shape[1]),data = _idset_,dtype = 'S10')
+            data_ids.attrs['Structure'] = 'Poly_ID, Poly_Type, Poly_Color, Track'
+            _idset_ = np.array([[],[],[],[]])    
 
     has_shapefile = False
     for shape_files in shapes_folders:
@@ -106,10 +110,10 @@ for currentFolder in folders:
                 has_shapefile = True
                 sf,crs = loadShp(shape_files)
                 ice_shapes_ind = getShapeIndex(sf,crs,'09')
-    
-    
+        
     if has_shapefile:
         print(month,day,'Has shapefile')         
+
         pathNS = currentFolder 
         sigNS = np.loadtxt(pathNS+'\SigKu.txt')
         LaNS = np.loadtxt(pathNS+'\LaKu.txt')     
@@ -120,6 +124,7 @@ for currentFolder in folders:
         LoNS_f = LoNS.flatten()
         sigNS_f = sigNS.flatten()
         thetaNS_f = thetaNS.flatten()
+
         size = len(LaNS_f)
         x,y = pyproj.transform(std_proj,shp_proj,LoNS_f,LaNS_f)
         # Points = np.array([LoNS_f, LaNS_f]).transpose().tolist()
@@ -137,16 +142,21 @@ for currentFolder in folders:
         for i in range(0,len(ice_shapes_ind)):
             _LaNS_ = LaNS_f[bool_mask[i] > 0]
             _LoNS_ = LoNS_f[bool_mask[i] > 0]
-            _SigNS_ = LaNS_f[bool_mask[i] > 0]
+            _SigNS_ = sigNS_f[bool_mask[i] > 0]
             _thetaNS_ = thetaNS_f[bool_mask[i] > 0]
             _dataset_ = np.concatenate((_dataset_, [_LaNS_,_LoNS_,_SigNS_,_thetaNS_] ),axis = 1)
-            Poly_ID = np.string_(sf.records()[ ice_shapes_ind[i] ]['ID']) ## hdf5 only accepts this
+
+            Poly_ID = np.string_(sf.records()[ ice_shapes_ind[i] ]['ID'])
+            Poly_Type = np.string_(sf.records()[ ice_shapes_ind[i] ]['POLY_TYPE']) ## hdf5 only accepts this
             Poly_Color = np.string_(sf.records()[ ice_shapes_ind[i] ]['COLORSA'])
             Track = np.string_(data_id)
+
             Poly_ID = np.array([Poly_ID]*len(_LaNS_))
+            Poly_Type = np.array([Poly_Type]*len(_LaNS_))
             Poly_Color = np.array([Poly_Color]*len(_LaNS_))
             Track = np.array([Track]*len(_LaNS_))
-            _idset_ = np.concatenate((_idset_,[Poly_ID,Poly_Color,Track]),axis = 1 )
+
+            _idset_ = np.concatenate((_idset_,[Poly_ID,Poly_Type,Poly_Color,Track]),axis = 1 )
             # print(_idset_.shape)
             # if _idset_.size>0:
                 # data_ids = group.create_dataset(prev_data_id[0:11]+'_ID',data = _idset_,dtype = 'S10')
@@ -156,25 +166,7 @@ for currentFolder in folders:
         # bool_mask = np.sum(bool_mask,0)
         # print(bool_mask)
         
-        
-        
     else: 
         print(month,day,'Has no shapefile')   
     previous_day = day
     prev_data_id = data_id
-
-
-
-
-    # if day is not previous_day:
-    #     data = group.create_dataset(data_id[0:11],dtype = 'f')    
-    #     data_ids = group.create_dataset(data_id[0:11]+'_ID',dtype = 'c')    
-    # else:
-        # if day is not previous_day:
-
-           
-
-
-
-
-

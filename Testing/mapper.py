@@ -11,7 +11,7 @@ import pyproj
 import pycrs
 from tqdm import tqdm
 
-data_path = 'E:\Work\GitHub\IceRad\PROCESSED_Data'
+data_path = 'C:\Work\Python\IceRad_Data\PROCESSED_Data'
 year = '2017'
 month = '03'
 days = ['19']
