@@ -3,7 +3,16 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import math
 from scipy import signal
-
+import os
+# os.environ['PROJ_LIB'] = r'E:/Anaconda/pkgs/proj4-5.2.0-ha925a31_1/Library/share'
+from mpl_toolkits.basemap import Basemap
+# import tkinter.filedialog as fd
+import matplotlib.path as mplPath
+import shapefile
+import pyproj
+import pycrs
+import toolbar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 # pathNS = 'E:\Work\GitHub\IceRad\Testing\d01m01y2017S003600'
@@ -12,12 +21,8 @@ pathNS = 'd27m12y2016S014815'
 # pathNS = 'E:\Work\GitHub\IceRad\Testing\d03m01g17S172400'
 # pathNS = 'E:\Work\GitHub\IceRad\Testing\d31m03y2017S213254'
 
-
 # File reading
-sigNS = np.loadtxt(pathNS+'\SigKu.txt')
-LaNS = np.loadtxt(pathNS+'\LaKu.txt')     
-LoNS =  np.loadtxt(pathNS+'\LoKu.txt')    
-thetaNS = np.loadtxt(pathNS+'\IncKu.txt')
+sigNS, LaNS, LoNS, thetaNS = toolbar.readFolder(pathNS)
 size =  thetaNS.shape
 
 for i in range(0,size[1]):
@@ -25,13 +30,6 @@ for i in range(0,size[1]):
         if j < math.floor(size[0]/2):
             thetaNS[j][i] *= -1  
 
-# plt.figure(1)
-# plt.subplot(3,1,1)
-# plt.imshow(sigNS,extent=[0,size[1], 0,size[0]],aspect = 'auto',cmap = 'jet')
-# plt.title('Base Data')
-
-# plt.figure(2)
-# plt.title('HParameters')
 
 # Ice Detecting
 def HypApp(xdata,p1,p2,p3):
@@ -74,10 +72,6 @@ for i in range(0,size[0]):
         if maxs[j] > 20:
             parameters[i][peakind[j]] = True
 
-# plt.figure(0)
-# plt.imshow(colFlag)
-# plt.figure(2)
-# plt.imshow(parameters)
 
 nMap = np.zeros_like(colFlag)   # This is to copy the array, not link it
 nMap[:] = colFlag[:]  
@@ -102,34 +96,16 @@ for i in range(0,size[0]):
 
 
 
+data_path = 'E:\Work\GitHub\IceRad_Data\PROCESSED_Data'
 
-import os
-# os.environ['PROJ_LIB'] = r'E:/Anaconda/pkgs/proj4-5.2.0-ha925a31_1/Library/share'
-from mpl_toolkits.basemap import Basemap
-# import tkinter.filedialog as fd
-import matplotlib.pyplot as plt
-import matplotlib.path as mplPath
-import shapefile
-import pyproj
-import pycrs
-from tqdm import tqdm
-import math
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-data_path = 'C:\Work\Python\IceRad_Data\PROCESSED_Data'
-
-full_path = r'C:\Work\Python\IceRad_Data\PROCESSED_Data\Planets_files\2016\2016 12 27\planet_okh_20161227_pl_a'
+full_path = r'E:\Work\GitHub\IceRad_Data\PROCESSED_Data\Planets_files\2016\2016 12 27\planet_okh_20161227_pl_a'
 # full_path = r'C:\Work\Python\IceRad_Data\PROCESSED_Data\Planets_files\2017\2017 02 07\planet_okh_20170207_pl_a'
 
-extent = [ 120,130,50,60 ] 
+extent = [ 135, 53, 150, 63 ] 
 fig=plt.figure(figsize = (8,6))
 ax=fig.add_axes([0.1,0.1,0.8,0.8])
 # setup mercator map projection.
-m = Basemap(llcrnrlon=135.,llcrnrlat=53.,urcrnrlon=150.,urcrnrlat=63.,\
-            rsphere=(6378137.00,6356752.3142),\
-            resolution='l',projection='merc',\
-            lat_0=40.,lon_0=-20.,lat_ts=20.)
-
+m = toolbar.makeMap(extent)
 
 #reading shapefile
 sf = shapefile.Reader(full_path+'.shp')

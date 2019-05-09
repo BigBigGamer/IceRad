@@ -1,3 +1,4 @@
+# Simple Gauss's derivative plotter
 import numpy as np
 import matplotlib.pyplot as plt
 

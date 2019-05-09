@@ -1,15 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+import toolbar
 
 pathNS = 'E:\Work\GitHub\IceRad\Testing\d01m01y2017S003600'
 # pathNS = 'E:\Work\GitHub\IceRad\Testing\d27m12y2016S014815'
 
 # File reading
-sigNS = np.loadtxt(pathNS+'\SigKu.txt')
-LaNS = np.loadtxt(pathNS+'\LaKu.txt')     
-LoNS =  np.loadtxt(pathNS+'\LoKu.txt')    
-thetaNS = np.loadtxt(pathNS+'\IncKu.txt')
+sigNS, LaNS, LoNS, thetaNS = toolbar.readFolder(pathNS)
 size =  thetaNS.shape
 
 plt.figure(1)
@@ -102,19 +100,10 @@ for i in range(0,size[1]):
 
 plt.figure(1)
 plt.subplot(3,1,3)
-# plt.imshow(colFlag_h,extent=[0, 500, 0, 49],aspect = 'auto')
-# plt.title('HypApprox')
 plt.plot(errh,'r-')
 plt.plot(errs,'b-')
 plt.plot(errs2,'g-')
 plt.title('Errors')
-
-# x = np.arange(-20,20,0.03)
-
-# for i in range(1,10):
-#     plt.plot(x,SqApp(x,i,1,0))   
-
-
 
 plt.show()
 print('Done!')

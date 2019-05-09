@@ -1,9 +1,12 @@
+# Plots track cuts at 'track_num' and 'track_num_w'
+
 import matplotlib.pyplot as plt
+from folderReader import readFolder
 from matplotlib import rc
 from matplotlib.backends.backend_pdf import PdfPages
+
 plt.rc('text', usetex = True)
 plt.rc('font', size=13, family = 'serif')
-# plt.rc('text.latex',unicode=True)
 plt.rc('legend', fontsize=14)
 plt.rc('text.latex', preamble=r'\usepackage[russian]{babel}')
 
@@ -13,11 +16,9 @@ import math
 import tkinter.filedialog as fd
 
 pathNS = 'd27m12y2016S014815'
-sigNS = np.loadtxt(pathNS+'\SigKu.txt')
-LaNS = np.loadtxt(pathNS+'\LaKu.txt')     
-LoNS =  np.loadtxt(pathNS+'\LoKu.txt')    
-thetaNS = np.loadtxt(pathNS+'\IncKu.txt')
+sigNS, LaNS, LoNS, thetaNS = readFolder(pathNS)
 size =  thetaNS.shape
+
 for i in range(0,size[1]):
     for j in range(0,size[0]):
         if j < math.floor(size[0]/2):
