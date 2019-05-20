@@ -1,7 +1,7 @@
 # Plots track cuts at 'track_num' and 'track_num_w'
 
 import matplotlib.pyplot as plt
-from folderReader import readFolder
+import toolbar
 from matplotlib import rc
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -16,7 +16,7 @@ import math
 import tkinter.filedialog as fd
 
 pathNS = 'd27m12y2016S014815'
-sigNS, LaNS, LoNS, thetaNS = readFolder(pathNS)
+sigNS, LaNS, LoNS, thetaNS = toolbar.readFolder(pathNS)
 size =  thetaNS.shape
 
 for i in range(0,size[1]):
@@ -30,10 +30,12 @@ sig = sigNS[:,track_num]
 theta = thetaNS[:,track_num]
 sig_w = sigNS[:,track_num_w]
 theta_W = thetaNS[:,track_num_w]
-plt.plot(theta,sig,'k.-')     
-plt.plot(theta_W,sig_w,'r.-')     
+plt.plot(theta,sig,'k.-',label = 'Ice cover')     
+plt.plot(theta_W,sig_w,'r.-',label = 'Water')     
 plt.xlabel('$\\theta,^{\\circ}$')
 plt.ylabel('$\\sigma^0,dB$')
 plt.grid(which = 'major')
 plt.legend()
+plt.savefig('ice_cuts.png', bbox_inches='tight')
+
 plt.show() 

@@ -54,6 +54,7 @@ plt.xlabel('$ \\theta, ^{\\circ}$')
 plt.ylabel('$ \\sigma^0, dB$')
 plt.ylim([-20,40])
 plt.grid(which = 'major')
+# plt.savefig('ice_cuts.pdf', bbox_inches='tight')
 
 plt.show()
 print('Done!')

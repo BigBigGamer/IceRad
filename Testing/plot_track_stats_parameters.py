@@ -9,7 +9,9 @@ from scipy.optimize import curve_fit
 import tkinter.filedialog as fd
 from matplotlib import rc
 from matplotlib.backends.backend_pdf import PdfPages
-from folderReader import readFolder
+import toolbar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 plt.rc('text', usetex = True)
 plt.rc('font', size=13, family = 'serif')
 plt.rc('legend', fontsize=14)
@@ -20,7 +22,7 @@ pathNS = 'd27m12y2016S014815'
 # pathNS =fd.askdirectory() 
 
 # Reading files in folder
-sigNS, LaNS, LoNS, thetaNS = readFolder(pathNS)
+sigNS, LaNS, LoNS, thetaNS = toolbar.readFolder(pathNS)
 
 size =  thetaNS.shape
 for i in range(0,size[1]):
@@ -69,16 +71,35 @@ fig = plt.figure()
 ax1 = fig.add_subplot(211)
 ax2 = fig.add_subplot(212)
 
-ax1.plot(mu[0],label = 'Mean')
-ax1.plot(mu[1],label = 'Dispersion' )
-ax1.plot(mu[2],label = 'Assymetry')
-ax1.plot(mu[3],'r-',label = 'Kurtosis')
+# ax1.plot(mu[0],label = 'Mean')
+# ax1.plot(mu[1],label = 'Dispersion' )
+# ax1.plot(mu[2],label = 'Assymetry')
+ax1.plot(mu[3],'k-')
 ax1.set_xlim([0,size[1]])
-ax1.set_ylabel('$\\\gamma$')
-ax1.legend()
+ax1.set_ylabel('$\\gamma_2$')
+ax1.grid(which = 'both')
+# ax1.legend()
 
-ax2.imshow(sigNSun,extent=[0,size[1], 0,size[0]],aspect = 'auto',cmap = 'jet')
-ax2.set_title('Base Data')
+im = ax2.imshow(sigNSun,extent=[0,size[1], 0,size[0]],aspect = 'auto',cmap = 'jet')
+
+# from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+# axins = inset_axes(ax2,
+#                    width="5%",  # width = 5% of parent_bbox width
+#                    height="50%",  # height : 50%
+#                    loc='lower left',
+#                    bbox_to_anchor=(1.05, 0., 1, 1),
+#                    bbox_transform=ax2.transAxes,
+#                    borderpad=0,
+#                    )
+
+# divider = make_axes_locatable(ax2)
+# cax = divider.append_axes("right", size="5%", pad=0.05)
+# cbar = plt.colorbar(im, cax = cax, orientation='vertical')
+
+# cbar.ax.set_xlabel('$\sigma^0,dB$')
+
+# plt.savefig('kurt2.pdf', bbox_inches='tight')
+
 plt.show()
 
 print('Done!')
