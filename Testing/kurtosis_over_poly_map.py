@@ -87,10 +87,10 @@ xm,ym = m(LoNS,LaNS)
 # border plotting
 toolbar.polyPlotShapeFile(m,ax,sf,crs)
 
-im = plt.scatter(xm,ym,30,colFlag_h, marker = '.',alpha = 1,cmap = 'jet_r')
+im = plt.scatter(xm,ym,35,colFlag_h, marker = '.',alpha = 1,cmap = 'jet_r')
 
 
-
+toolbar.borderPlotShapeFile(m,ax,sf,crs)
 
 # colorbar
 divider = make_axes_locatable(ax)

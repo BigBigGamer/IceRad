@@ -36,6 +36,6 @@ cbar = plt.colorbar(im, cax=cax, orientation='vertical')
 
 cbar.ax.set_xlabel('$\sigma^0,dB$')
 
-plt.savefig('plot_zoomed.pdf', bbox_inches='tight')
+# plt.savefig('plot_zoomed.pdf', bbox_inches='tight')
 
 plt.show()
