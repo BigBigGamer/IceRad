@@ -12,18 +12,17 @@ import math
 from scipy import signal
 import toolbar
 
+from scipy.optimize import curve_fit
 
-def findEdgesH(sigNS):
-    size = len(sigNS)
-    stepsize = 50
-    x = np.arange(-stepsize,stepsize)
-    sigma = 6
-    step = -np.heaviside(x-stepsize,1) + np.heaviside(x+stepsize,1)
-    Gauss = lambda x,s: -x * np.exp( -x**2 / ( 2*s**2 ) )
-    convd = np.convolve(sigNS, Gauss(x,sigma),'same')
-    snr = np.abs(convd) / ( np.sqrt( np.convolve(step,sigNS**2,'same') ) ) 
-    return snr
+from matplotlib import rc
+from matplotlib.backends.backend_pdf import PdfPages
 
+plt.rc('text', usetex = True)
+plt.rc('font', size=13, family = 'serif')
+plt.rc('legend', fontsize=14)
+
+import scipy as sp
+from scipy import signal
 
 data_path = 'E:\Work\GitHub\IceRad_Data\PROCESSED_Data'
 
@@ -68,15 +67,130 @@ thetaNSun = thetaNS
 sigNS = np.power(10, sigNS*0.1)
 thetaNS = np.tan( thetaNS/180 * np.pi)
 mu = [[],[],[],[]]
-colFlag_h = np.zeros((size),dtype = float)
-parameters = np.zeros(size,dtype=bool)          
+def HypApp(xdata,p1,p2,p3):
+    return p1 * abs( 1/(abs(xdata) + p2) ) + p3
+
+def findEdgesH(data,sigma):
+    size = len(data)
+    stepsize = math.floor(6*sigma)
+    x = np.arange(-stepsize,stepsize)
+    # sigma = 9
+    n0 = 0.5
+    # step = -np.heaviside(x-stepsize,1) + np.heaviside(x+stepsize,1)
+    gaussD = lambda x,s: -x * np.exp( -x**2 / ( 2*s**2 ) ) # gaussian -derivative
+    # gaussD = lambda x,s: -np.heaviside(x-stepsize,1) + np.heaviside(x,2) -np.heaviside(x+stepsize,1) # step
+    gaussA = gaussD(np.arange(-stepsize/2, stepsize/2),sigma)
+    gaussA_grad = np.gradient(gaussA)
+    data_grad = np.gradient(data)
+
+    response = np.convolve(data, gaussA,'same')
+    # noise = np.sqrt( np.convolve(step,sigNS**2,'same')
+    noise = np.sqrt( np.trapz(data**2))
+
+    p1 = abs(np.convolve(data_grad, gaussA_grad,'same'))
+    p2 = np.sqrt( np.trapz(data_grad**2))
+    loc = p1/(p2*n0**2)
+    # snr = np.abs(convd) / ( np.sqrt( sp.integrate.quad( Gauss**2,  ) ) )
+    # print(np.convolve(step,sigNS**2,'same'))
+    snr = np.abs(response) / ( noise ) 
+    # snr2 = np.abs(convd) / ( np.sqrt( np.trapz( sigNS**2 ) ) ) 
+    # plt.figure(22)
+    # plt.plot(gaussA)
+    return snr*loc
+
+def adjustParameters(parameters,detector,upper,lower):
+    size = parameters.shape
+    for i in range(0,size[0]):
+        peakind,_ = signal.find_peaks( detector[i,:] )
+    
+        for j in peakind:
+            maxs[i][j] = detector[i][j]
+            # strong border
+            if maxs[i][j] > upper:
+                parameters[i][j] = True
+
+        for j in peakind:
+            # middle
+            if (maxs[i][j] < upper) and (maxs[i][j] > lower):
+                for s_x in [-1,0,1]:
+
+                    if not(parameters[i][j]):
+                        for s_y in [-1,0,1]:
+                            if (j + s_y >= size[1]-1) or (j + s_y < 0):
+                                break
+                            if (i + s_x > 48) or (i + s_x < 0):
+                                break
+                            if parameters[i+s_x][j+s_y]:
+                                parameters[i][j] = True
+                                break
+    return parameters
+
+
+colFlag = np.zeros((size),dtype = bool)
+
+for i in range(0,size[1]):
+    try:
+        new_parameters, covariance = curve_fit(HypApp,thetaNS[:,i],sigNS[:,i], [200,5,0],bounds =([150,2,-np.inf],[500,7,np.inf]) )
+        diff = np.subtract( sigNS[:,i], HypApp( thetaNS[:,i],new_parameters[0],new_parameters[1],new_parameters[2] ))
+        err = np.mean( diff**2 ) * 100 / ( np.amax(sigNS[:,i]) - np.amin(sigNS[:,i]) )
+        if ( new_parameters[0] < 2000 ) & ( new_parameters[0] > 15 ) & ( new_parameters[2] < 100 ) & ( err < 30 ):
+            colFlag[:,i] = True
+        else: 
+            colFlag[:,i] = False
+    except RuntimeError:
+        print('Not fitted')
+
+parameters = np.zeros(size)  
+detectorBig = np.zeros(size)
+detectorSmall = np.zeros(size)
+maxs = np.zeros(size)    
+cvs = np.zeros(size,dtype = bool) 
+sigNS_inv = 10**(0.1*sigNS) 
+
+sigNS = sp.ndimage.filters.gaussian_filter(sigNS, 0.5, mode='constant')
 for i in range(0,size[0]):
-    detector = findEdgesH(sigNS[i,:])    
-    peakind,_ = signal.find_peaks( detector )
-    maxs = detector[peakind]* 100 / np.amax(detector[peakind])
-    for j in range(0,len(maxs)):
-        if maxs[j] > 20:
-            parameters[i][peakind[j]] = True
+    #using function .find_peaks
+    detectorBig[i,:] = findEdgesH(sigNS[i,:],6)
+    detectorSmall[i,:] = findEdgesH(sigNS[i,:],1.1)
+    detectorBig[i,:] = detectorBig[i,:]* 100 / np.amax(detectorBig[i,:])
+    detectorSmall[i,:] = detectorSmall[i,:]* 100 / np.amax(detectorSmall[i,:])
+
+cvs = detectorSmall
+
+parameters = adjustParameters(parameters,detectorSmall,60,15)
+for i in range(0,size[0]):
+    #using function .find_peaks
+    detectorSmall[i,:] = findEdgesH(sigNS_inv[i,:],5)
+    detectorSmall[i,:] = detectorSmall[i,:]* 100 / np.amax(detectorSmall[i,:])
+
+# cvs = detectorSmall
+parameters = adjustParameters(parameters,detectorSmall,50,30)
+## fixing - stuff
+parameters[25,95] = 1
+parameters[24,93] = 1
+parameters[26,93] = 1
+parameters[23,92] = 1
+
+nMap = np.zeros_like(colFlag)   # This is to copy the array, not link it
+nMap[:] = colFlag[:]            #
+# flag filling
+for i in range(0,size[0]):
+    BorderIndex = np.nonzero(parameters[i,:])
+    BorderIndex = np.append(BorderIndex,size[1])
+    BorderIndex = np.insert(BorderIndex,0,0)
+    zAm=0
+    iAm=0
+    for k in range(0,len(BorderIndex)-1):
+        for m in range(BorderIndex[k],BorderIndex[k+1]):
+            if nMap[i][m] == 0:
+                zAm +=1
+            if nMap[i][m] == 1:
+                iAm +=1
+        Ams = [zAm,iAm]
+        # maxAm = np.amax(Ams)
+        nMap[i,BorderIndex[k]:BorderIndex[k+1]] = np.argmax(Ams)
+        zAm=0
+        iAm=0
 
 
 xm,ym = m(LoNS,LaNS)

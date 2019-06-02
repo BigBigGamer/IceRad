@@ -34,13 +34,13 @@
 \usepackage{pgfplots,pgfplotstable,booktabs,colortbl}
 \usepackage{physics}
 \usepackage{mathtools}
-\mathtoolsset{showonlyrefs=true}
+% \mathtoolsset{showonlyrefs=true}
 
-\newcommand*\dotvec[1][1,1]{\crossproducttemp#1\relax}
-\def\crossproducttemp#1,#2\relax{{\qty[\vec{#1}\times\vec{#2}\,]}}
+% \newcommand*\dotvec[1][1,1]{\crossproducttemp#1\relax}
+% \def\crossproducttemp#1,#2\relax{{\qty[\vec{#1}\times\vec{#2}\,]}}
 
-\newcommand*\prodvec[1][1,1]{\crossproducttempa#1\relax}
-\def\crossproducttempa#1,#2\relax{{\qty[{#1}\times{#2}\,]}}
+% \newcommand*\prodvec[1][1,1]{\crossproducttempa#1\relax}
+% \def\crossproducttempa#1,#2\relax{{\qty[{#1}\times{#2}\,]}}
 % \usepackage{showframe}
 \usepackage[]{geometry}
 \geometry{
@@ -55,3 +55,7 @@
 \setlength{\parindent}{1.25cm}
 \frenchspacing 
 \usepackage{setspace}
+\setlength{\tabcolsep}{20pt}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{xcolor}
+

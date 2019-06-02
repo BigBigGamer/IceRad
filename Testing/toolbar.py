@@ -15,7 +15,7 @@ def makeMap(extent):
             resolution = 'h', projection = 'merc',\
             lat_0 = 40., lon_0 = -20., lat_ts = 20.)
     m.fillcontinents(zorder = 0) 
-    m.drawcoastlines(zorder = 1)
+    m.drawcoastlines(zorder = 3)
     return m
 
 def polyPlotShapeFile(m,ax,sf,crs):
