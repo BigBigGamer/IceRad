@@ -8,7 +8,7 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 from matplotlib import rc
 plt.rc('text', usetex = True)
-plt.rc('font', size=13, family = 'serif')
+plt.rc('font', size=18, family = 'serif')
 plt.rc('legend', fontsize=14)
 plt.rc('text.latex', preamble=r'\usepackage[russian]{babel}')
 import shapefile
@@ -98,7 +98,7 @@ cax = divider.append_axes("right", size="5%", pad=0.05)
 cbar = plt.colorbar(im, cax=cax, orientation='vertical')
 cbar.ax.set_xlabel('$\gamma_2$')
 
-plt.savefig('kurt2.pdf', bbox_inches='tight')
+# plt.savefig('kurt2.pdf', bbox_inches='tight')
 
 
 plt.show()

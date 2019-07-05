@@ -94,3 +94,24 @@ def borderPlotShapeFile(m,ax,sf,crs):
                 x_lon,y_lat = m(x_lon,y_lat)
                 c = 'b'
                 m.scatter(x_lon,y_lat,0.5,marker = '.',color = c)
+
+def getHalfs(array):
+    # Create two arrays 'up' and 'down' from 'array' which are upper and bottom halfs,
+    #  with mirrowed opposite sides. Shapes stay the same.
+    import math
+    import numpy as np
+    
+    size = array.shape
+    up = np.zeros(size) - 100
+    down = np.zeros(size) -100
+
+    up_limit = math.floor((size[0] + 1)/2)
+    down_limit = math.floor((size[0] - 1)/2)
+
+    up[0:up_limit,:] = array[0:up_limit,:]
+    up[down_limit:,:] = np.flipud(array[0:up_limit,:])
+
+    down[down_limit:,:] = array[down_limit:,:]
+    down[0:up_limit:,:] = np.flipud(array[down_limit:,:])
+
+    return up,down

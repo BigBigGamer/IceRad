@@ -10,7 +10,7 @@ from matplotlib import rc
 from matplotlib.backends.backend_pdf import PdfPages
 
 plt.rc('text', usetex = True)
-plt.rc('font', size=13, family = 'serif')
+plt.rc('font', size=18, family = 'serif')
 plt.rc('legend', fontsize=14)
 
 import scipy as sp
@@ -135,7 +135,7 @@ for i in range(0,size[0]):
     detectorBig[i,:] = detectorBig[i,:]* 100 / np.amax(detectorBig[i,:])
     detectorSmall[i,:] = detectorSmall[i,:]* 100 / np.amax(detectorSmall[i,:])
 
-cvs = detectorSmall
+# cvs = detectorSmall
 
 # parameters = adjustParameters(parameters,detectorBig,60,30)
 parameters = adjustParameters(parameters,detectorSmall,60,15)
@@ -159,34 +159,31 @@ parameters[26,93] = 1
 parameters[23,92] = 1
 
 nMap = np.zeros_like(colFlag)   # This is to copy the array, not link it
-nMap[:] = colFlag[:]            #
+nMap[:] = colFlag[:]       
+     #
 # flag filling
-for i in range(0,size[0]):
-    BorderIndex = np.nonzero(parameters[i,:])
-    BorderIndex = np.append(BorderIndex,size[1])
-    BorderIndex = np.insert(BorderIndex,0,0)
-    zAm=0
-    iAm=0
-    for k in range(0,len(BorderIndex)-1):
-        for m in range(BorderIndex[k],BorderIndex[k+1]):
-            if nMap[i][m] == 0:
-                zAm +=1
-            if nMap[i][m] == 1:
-                iAm +=1
-        Ams = [zAm,iAm]
-        # maxAm = np.amax(Ams)
-        nMap[i,BorderIndex[k]:BorderIndex[k+1]] = np.argmax(Ams)
-        zAm=0
-        iAm=0
+# for i in range(0,size[0]):
+#     BorderIndex = np.nonzero(parameters[i,:])
+#     BorderIndex = np.append(BorderIndex,size[1])
+#     BorderIndex = np.insert(BorderIndex,0,0)
+#     zAm=0
+#     iAm=0
+#     for k in range(0,len(BorderIndex)-1):
+#         for m in range(BorderIndex[k],BorderIndex[k+1]):
+#             if nMap[i][m] == 0:
+#                 zAm +=1
+#             if nMap[i][m] == 1:
+#                 iAm +=1
+#         Ams = [zAm,iAm]
+#         # maxAm = np.amax(Ams)
+#         nMap[i,BorderIndex[k]:BorderIndex[k+1]] = np.argmax(Ams)
+#         zAm=0
+#         iAm=0
 
-# colFlag = colFlag[:,100:300]
-# nMap = nMap[:,100:300]
-# parameters = parameters[:,100:300]
 
-fig = plt.figure(figsize=(13, 4))
 
-# nMap[nMap>0] = nMap 
-# nMap[parameters>0] = 3
+fig = plt.figure(figsize=(10, 5))
+
 
 from matplotlib import colors
 cmap = colors.ListedColormap(['#352a86','#0f5bdd','yellow'])
@@ -195,14 +192,16 @@ norm = colors.BoundaryNorm([0,0.9,1.2,4], cmap.N)
 # plt.imshow(colFlag + 5*parameters,cmap = cmap,norm = norm,extent = [100,300,0,49])
 
 # plt.subplot(3,1,1)
-plt.imshow(nMap + 5*parameters,cmap = cmap,norm = norm,extent = [100,300,0,49])
+plt.imshow(nMap + 5*parameters,cmap = cmap,norm = norm,extent = [130,240,-18,18])
 # plt.title('my')
 # plt.subplot(3,1,2)
 # plt.title('cv2')
 # plt.subplot(3,1,3)
 # plt.imshow(sigNS)
 
-# plt.savefig('long3.pdf', bbox_inches='tight')
+plt.ylabel('$\\theta, ^{\\circ}$')
+# plt.savefig('imgs/4.png', bbox_inches='tight')
+plt.xlabel('Scan number')
 
 plt.show()
 print('Done!')

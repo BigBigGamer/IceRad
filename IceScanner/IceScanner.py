@@ -14,6 +14,7 @@ from mpl_toolkits.basemap import Basemap
 import scipy as sp
 from scipy.optimize import curve_fit
 from scipy import signal
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def HypApp(xdata,p1,p2,p3):
@@ -39,7 +40,7 @@ class IceScanner(tk.Tk):
         tk.Tk.__init__(self)
         # tk.Tk.iconbitmap(self,default ='path to icon file.ico ')
         tk.Tk.wm_title(self,'Ice Scanner')
-        mainwindow = tk.Frame(self, width = 1000, height = 700)
+        mainwindow = tk.Frame(self, width = 1000, height = 500)
         # self.geometry('1000x700')
         mainwindow.pack(side = 'bottom',fill = 'both',expand = True)
         self.graphs = GraphSet(mainwindow,self)
@@ -67,6 +68,10 @@ class ToolSet(tk.Frame):
         self.VerifyButton = ttk.Button(self, text = 'Verify results', command = self.verification )
         self.LoadLabel = ttk.Label(self,text = 'Load files')
         self.StatusLabel = ttk.Label(self,text = 'Awaiting commands')
+        self.method = tk.StringVar(self)
+        self.methods = ['By Approximation','By Kurtosis']
+        # self.methods.set(self.choices[0])
+        self.DetectorSelect = ttk.OptionMenu(self,self.method,self.methods[0],*self.methods)
         # packing
         self.LoadLabel.grid(row = 0, column= 1)
         self.StatusLabel.grid(row = 0, column= 2)
@@ -75,27 +80,33 @@ class ToolSet(tk.Frame):
         self.VerifyButton.grid(row = 2, column = 3, padx=10, pady=10)
         self.DetectButton.grid(row = 2, column = 0, padx=10, pady=10)
         self.TrackButton.grid(row = 2, column = 1, padx=10, pady=10)
+        self.DetectorSelect.grid(row = 3, column = 0, padx=0, pady=10)
     
 
     def loader(self):
-        self.pathNS = fd.askdirectory() 
-        self.LoadLabel['text'] = 'Loaded: ' + self.pathNS[len(self.pathNS) - 18:-1] 
-        self.sigNS = np.loadtxt(self.pathNS+'\SigKu.txt')
-        self.LaNS = np.loadtxt(self.pathNS+'\LaKu.txt')     
-        self.LoNS =  np.loadtxt(self.pathNS+'\LoKu.txt')    
-        self.thetaNS = np.loadtxt(self.pathNS+'\IncKu.txt')
-        for i in range(0,self.thetaNS.shape[1]):
-            for j in range(0,math.floor(self.thetaNS.shape[0]/2)):
-                self.thetaNS[j][i] = -self.thetaNS[j][i]    
-        self.controller.loaded = True
-        self.StatusLabel['text'] = 'Successfully'
-        self.controller.graphs.update_map()
+        try:
+            self.pathNS = fd.askdirectory() 
+            self.LoadLabel['text'] = 'Loaded: ' + self.pathNS[len(self.pathNS) - 18:-1] 
+            self.sigNS = np.loadtxt(self.pathNS+'\SigKu.txt')
+            self.LaNS = np.loadtxt(self.pathNS+'\LaKu.txt')     
+            self.LoNS =  np.loadtxt(self.pathNS+'\LoKu.txt')    
+            self.thetaNS = np.loadtxt(self.pathNS+'\IncKu.txt')
+            for i in range(0,self.thetaNS.shape[1]):
+                for j in range(0,math.floor(self.thetaNS.shape[0]/2)):
+                    self.thetaNS[j][i] = -self.thetaNS[j][i]    
+            self.controller.loaded = True
+            self.StatusLabel['text'] = 'Successfully'
+            self.controller.graphs.update_map()
+        except:
+            tk.messagebox.showerror('Error', 'No data selected, or something else.')
 
     
     def ice_detection(self):
-        if not(self.controller.loaded):
-            tk.messagebox.showerror('Error', 'No data was loaded')
-        else:
+
+        def kurtosisFilter(self):
+            return 0
+
+        def hyperbollicFilter(self):
             LaNS = self.controller.tools.LaNS
             LoNS = self.controller.tools.LoNS
             thetaNS = self.controller.tools.thetaNS
@@ -115,10 +126,14 @@ class ToolSet(tk.Frame):
 
                 except RuntimeError:
                     print('Not fitted')
+            
+            nMap = np.zeros_like(colFlag)   # This is to copy the array, not link it
+            nMap[:] = colFlag[:]            #
+            return nMap
 
-            self.StatusLabel['text'] = 'Flags created' 
-
-            parameters = np.zeros(size,dtype=bool)          
+        def findEdges(sigNS):
+            size = sigNS.shape
+            borders = np.zeros(size,dtype=bool)          
             for i in range(0,size[0]):
             # for i in range(25,26):
                 #using function .find_peaks
@@ -129,17 +144,13 @@ class ToolSet(tk.Frame):
                 # maxs = detector[peakind]
                 for j in range(0,len(maxs)):
                     if maxs[j] > 20:
-                        parameters[i][peakind[j]] = True
-            
-            self.StatusLabel['text'] = 'Peaks found' 
-
-            nMap = np.zeros_like(colFlag)   # This is to copy the array, not link it
-            nMap[:] = colFlag[:]            #
-
-            # flag filling
-
+                        borders[i][peakind[j]] = True
+            return borders
+        
+        def fillFlags(borders,ice):
+            size = borders.shape
             for i in range(0,size[0]):
-                BorderIndex = np.nonzero(parameters[i,:])
+                BorderIndex = np.nonzero(borders[i,:])
                 BorderIndex = np.append(BorderIndex,size[1])
                 BorderIndex = np.insert(BorderIndex,0,0)
                 zAm=0
@@ -155,6 +166,26 @@ class ToolSet(tk.Frame):
                     nMap[i,BorderIndex[k]:BorderIndex[k+1]] = np.argmax(Ams)
                     zAm=0
                     iAm=0
+            return nMap
+
+        if not(self.controller.loaded):
+            tk.messagebox.showerror('Error', 'No data was loaded')
+        else:
+            print(self.method.get())
+            if self.method.get() == 'By Approximation':
+                nMap = hyperbollicFilter(self)
+            elif self.method.get() == 'By Kurtosis':
+                tk.messagebox.showerror('Error', 'Not yet supported')
+                
+            # self.StatusLabel['text'] = 'Flags created' 
+            
+            # Finding border
+            borders = findEdges(self.controller.tools.sigNS)          
+
+            # self.StatusLabel['text'] = 'Peaks found' 
+
+            # flag filling
+            # nMap = fillFlags(borders, nMap)
             
             newwindow = tk.Toplevel() #make new window
             figure = Figure(figsize=(4,3),dpi = 150)
@@ -164,12 +195,12 @@ class ToolSet(tk.Frame):
             axis4 = figure.add_subplot(414)
             axis1.imshow(nMap)
             axis1.set_title('icemap_final')
-            axis2.imshow(colFlag)
-            axis2.set_title('flags')
-            axis3.imshow(parameters)
+            # axis2.imshow(colFlag)
+            # axis2.set_title('flags')
+            axis3.imshow(borders)
             axis3.set_title('borders')
-            axis4.imshow(sigNS,extent=[0, 500, 0, 49],aspect = 'auto',cmap = 'jet')
-            axis4.set_title('map')
+            # axis4.imshow(sigNS,extent=[0, 500, 0, 49],aspect = 'auto',cmap = 'jet')
+            # axis4.set_title('map')
             canvas = FigureCanvasTkAgg(figure,newwindow)
             canvas.draw()
             canvas._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
@@ -299,9 +330,14 @@ class GraphSet(tk.Frame):
             trackwindow = tk.Toplevel()
             thetaNS = self.controller.tools.thetaNS
             sigNS = self.controller.tools.sigNS
-            figure = Figure(figsize=(4,3),dpi = 150)
+            size = thetaNS.shape
+            figure = Figure(figsize=(8,3), dpi = 150)
             axis = figure.add_subplot(111)
-            axis.imshow(sigNS,extent=[0, 500, 0, 49],aspect = 'auto',cmap = 'jet')
+            im = axis.imshow(sigNS,extent=[0, size[1], 0, size[0]], aspect = 'auto',cmap = 'jet')
+            divider = make_axes_locatable(axis)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            cbar = plt.colorbar(im, cax = cax, orientation='vertical')
+            cbar.ax.set_title('$\sigma^0,dB$')
             canvas = FigureCanvasTkAgg(figure,trackwindow)
             canvas.draw()
             canvas._tkcanvas.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
@@ -317,16 +353,22 @@ class GraphSet(tk.Frame):
         #Boundries=[64, 168, 44, 132];
         if self.first_time :
             self.figure = Figure()
-            self.figure = Figure(figsize=(7,6),dpi = 150)
+            self.figure = Figure(figsize=(6,5),dpi = 150)
             self.axis = self.figure.add_subplot(111)
             
+
+
             self.main_map = Basemap(llcrnrlon=132, llcrnrlat=44,urcrnrlon=168,urcrnrlat=64, projection='merc', ax = self.axis, resolution='c')
-            self.main_map.drawcoastlines(linewidth = 0.2,color = 'grey')
-            self.main_map.drawmapboundary(linewidth=0.1)
-            # self.main_map.fillcontinents()
+           
+           
+           
+            self.main_map.fillcontinents(zorder = 0)
+            self.main_map.drawcoastlines(linewidth = 0.2,color = 'grey', zorder = 3)
+            self.main_map.drawmapboundary(linewidth=0.1, zorder=-1)
             x,y = self.main_map(LoNS,LaNS)
-            self.scat = self.main_map.scatter(x,y,2,sigNS, marker = '.',alpha =0.7,cmap = 'jet')
-            self.figure.colorbar(self.scat)
+            self.scat = self.main_map.scatter(x,y,2,sigNS, marker = '.',alpha =0.7,cmap = 'jet',zorder = 3)
+            self.cbar = self.figure.colorbar(self.scat)
+            self.cbar.ax.set_title('$\sigma^0,dB$')
             self.canvas = FigureCanvasTkAgg(self.figure,self)
             # self.canvas.get_tk_widget().pack(pady = 10, expand = True)
 
@@ -341,6 +383,12 @@ class GraphSet(tk.Frame):
             self.scat.remove()
             x,y = self.main_map(LoNS,LaNS)
             self.scat = self.main_map.scatter(x,y,1,sigNS, marker = '.',alpha =0.7,cmap = 'jet')
+            # divider = make_axes_locatable(ax)
+            # cax = divider.append_axes("right", size="5%", pad=0.05)
+            # cbar = plt.colorbar(im, cax=cax, orientation='vertical')
+
+            # cbar.ax.set_title('$\sigma^0,dB$')
+
             self.canvas.draw()
 
 

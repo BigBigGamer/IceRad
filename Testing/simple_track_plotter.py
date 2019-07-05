@@ -6,8 +6,8 @@ from matplotlib import rc
 from matplotlib.backends.backend_pdf import PdfPages
 
 plt.rc('text', usetex = True)
-plt.rc('font', size=13, family = 'serif')
-plt.rc('legend', fontsize=14)
+plt.rc('font', size=25, family = 'serif')
+plt.rc('legend', fontsize=25)
 plt.rc('text.latex', preamble=r'\usepackage[russian]{babel}')
 
 import numpy as np
@@ -26,6 +26,8 @@ for i in range(0,size[1]):
 
 track_num = 162
 track_num_w = 250
+fig=plt.figure(figsize = (8,6))
+
 sig = sigNS[:,track_num]
 theta = thetaNS[:,track_num]
 sig_w = sigNS[:,track_num_w]

@@ -63,39 +63,81 @@ for i in range(0,size[1]):
         if j < math.floor(size[0]/2):
             thetaNS[j][i] *= -1  
 sigNSun = sigNS # dB
+sigNSun_up,sigNSun_down = toolbar.getHalfs(sigNSun)
+
 thetaNSun = thetaNS 
+thetaNSun_up,thetaNSun_down = toolbar.getHalfs(thetaNSun)
+
 
 # normalization 
 sigNS = np.power(10, sigNS*0.1)
+sigNS_up,sigNS_down = toolbar.getHalfs(sigNS)
+
 thetaNS = np.tan( thetaNS/180 * np.pi)
-mu = [[],[],[],[]]
-colFlag_h = np.zeros((size),dtype = float)
-for i in range(0,size[1]):
-    mu_up_2,mu_up_3,mu_up_4,mu_down = 0,0,0,0
-    m2,m3,m4 = 0,0,0
+thetaNS_up,thetaNS_down = toolbar.getHalfs(thetaNS)
+
+mu_up = [[],[],[],[]]
+mu_down = [[],[],[],[]]
+
+size_half =  thetaNS_up.shape
+colFlag_h = np.zeros((size),dtype = bool)
+colFlag_h_up = np.zeros((size_half),dtype = bool)
+colFlag_h_down = np.zeros((size_half),dtype = bool)
+
+for i in range(0,size_half[1]):
+    mu_up_2,mu_up_3,mu_up_4,mu_downs = 0,0,0,0
+    # m2,m3,m4 = 0,0,0
     cut_n = i
-    y = sigNS[:,cut_n] # sig_0
-    x = thetaNS[:,cut_n] # tan
-    # moments calculation 
+    y = sigNS_up[:,cut_n] # sig_0
+    x = thetaNS_up[:,cut_n] # tan
 
-    # mean
-    mean = np.sum([ x[j] * y[j] * np.cos(thetaNSun[j][i])**4  for j in range(0,size[0]) ]) / np.sum([ y[j] * np.cos(thetaNSun[j][i])**4  for j in range(0,size[0]) ]) 
+    mean_up = np.sum([ x[j] * y[j] * np.cos(thetaNSun_up[j][i])**4  for j in range(0,size_half[0]) ]) / np.sum([ y[j] * np.cos(thetaNSun_up[j][i])**4  for j in range(0,size_half[0]) ]) 
 
-    for j in range(0,size[0]):
-        mu_up_2 +=(x[j]- mean)**2 * y[j] * np.cos(thetaNSun[j][i])**4
-        mu_up_3 += (x[j]- mean)**3 * y[j] * np.cos(thetaNSun[j][i])**4
-        mu_up_4 += (x[j]- mean)**4 * y[j] * np.cos(thetaNSun[j][i])**4
-        mu_down += y[j] * np.cos(thetaNSun[j][i])**4
+    for j in range(0,size_half[0]):
+        mu_up_2 += (x[j]- mean_up)**2 * y[j] * np.cos(thetaNSun_up[j][i])**4
+        # mu_up_3 += (x[j]- mean)**3 * y[j] * np.cos(thetaNSun[j][i])**4
+        mu_up_4 += (x[j]- mean_up)**4 * y[j] * np.cos(thetaNSun_up[j][i])**4
+        mu_downs += y[j] * np.cos(thetaNSun_up[j][i])**4
 
-    dispersion = np.sqrt(mu_up_2/mu_down)
-    skewness = mu_up_3/mu_down / (dispersion)**3
-    kurtosis = mu_up_4/mu_down / (dispersion)**4 - 3 
+    dispersion_up = np.sqrt(mu_up_2/mu_downs)
+    # skewness = (mu_up_3/mu_down) / (dispersion**3)
+    kurtosis_up = (mu_up_4/mu_downs) / (dispersion_up**4) - 3 
     
-    mu[0].append(mean)
-    mu[1].append(dispersion)
-    mu[2].append(skewness)
-    mu[3].append(kurtosis)
-    colFlag_h[:,i] = kurtosis
+    mu_up[0].append(mean_up)
+    mu_up[1].append(dispersion_up)
+    # mu_up[2].append(skewness)
+    mu_up[3].append(kurtosis_up)
+
+
+
+    mu_up_2,mu_up_3,mu_up_4,mu_downs = 0,0,0,0
+    y = sigNS_down[:,cut_n] # sig_0
+    x = thetaNS_down[:,cut_n] # tan
+
+    mean_down = np.sum([ x[j] * y[j] * np.cos(thetaNSun_down[j][i])**4  for j in range(0,size_half[0]) ]) / np.sum([ y[j] * np.cos(thetaNSun_down[j][i])**4  for j in range(0,size_half[0]) ]) 
+
+    for j in range(0,size_half[0]):
+        mu_up_2 += (x[j]- mean_down)**2 * y[j] * np.cos(thetaNSun_down[j][i])**4
+        # mu_up_3 += (x[j]- mean)**3 * y[j] * np.cos(thetaNSun[j][i])**4
+        mu_up_4 += (x[j]- mean_down)**4 * y[j] * np.cos(thetaNSun_down[j][i])**4
+        mu_downs += y[j] * np.cos(thetaNSun_down[j][i])**4
+
+    dispersion_down = np.sqrt(mu_up_2/mu_downs)
+    # skewness = (mu_up_3/mu_downs) / (dispersion**3)
+    kurtosis_down = (mu_up_4/mu_downs) / (dispersion_down**4) - 3 
+    
+    mu_down[0].append(mean_down)
+    mu_down[1].append(dispersion_down)
+    # mu_down[2].append(skewness)
+    mu_down[3].append(kurtosis_down)
+
+
+
+# Merge up-half and down-half
+kurtosis  = np.empty(size)
+kurtosis[0:25,:] = mu_up[3]
+kurtosis[24:,:] = mu_down[3]
+colFlag_h = kurtosis
 
 
 toolbar.polyPlotShapeFile(m,ax,sf,crs)
@@ -145,7 +187,7 @@ cax = divider.append_axes("right", size="5%", pad=0.05)
 cbar = plt.colorbar(im, cax=cax, orientation='vertical')
 cbar.ax.set_xlabel('$\gamma_2$')
 
-# plt.savefig('imgs/51.png', bbox_inches='tight',dpi=900)
+plt.savefig('imgs/51.png', bbox_inches='tight',dpi=900)
 
 
 plt.show()

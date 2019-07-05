@@ -13,8 +13,8 @@ import toolbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 plt.rc('text', usetex = True)
-plt.rc('font', size=13, family = 'serif')
-plt.rc('legend', fontsize=14)
+plt.rc('font', size=18, family = 'serif')
+plt.rc('legend', fontsize=16)
 plt.rc('text.latex', preamble=r'\usepackage[russian]{babel}')
 
 pathNS = 'd27m12y2016S014815'
@@ -23,7 +23,10 @@ pathNS = 'd27m12y2016S014815'
 
 # Reading files in folder
 sigNS, LaNS, LoNS, thetaNS = toolbar.readFolder(pathNS)
-
+LoNS = LoNS[:,100:300]
+LaNS = LaNS[:,100:300]
+sigNS = sigNS[:,100:300]
+thetaNS = thetaNS[:,100:300]
 size =  thetaNS.shape
 for i in range(0,size[1]):
     for j in range(0,size[0]):
@@ -67,38 +70,44 @@ for i in range(0,size[1]):
 
 
 
-fig = plt.figure()
-ax1 = fig.add_subplot(211)
-ax2 = fig.add_subplot(212)
+fig = plt.figure(figsize = (10,6))
+
+# ax1 = fig.add_subplot(121)
+ax1 = fig.add_subplot(111)
+# ax2 = fig.add_subplot(122)
 
 # ax1.plot(mu[0],label = 'Mean')
 # ax1.plot(mu[1],label = 'Dispersion' )
 # ax1.plot(mu[2],label = 'Assymetry')
-ax1.plot(mu[3],'k-')
-ax1.set_xlim([0,size[1]])
-ax1.set_ylabel('$\\gamma_2$')
-ax1.grid(which = 'both')
+# ax1.plot(np.arange(134,300),mu[3][34:],'k-')
+# # # ax1.set_xlim([0,size[1]-134])
+# # # ax.set_xlabel(str(range()))
+# ax1.set_ylabel('$\\gamma_2$')
+# ax1.set_xlabel('Scan number')
+# ax1.grid(which = 'both')
 # ax1.legend()
 
-im = ax2.imshow(sigNSun,extent=[0,size[1], 0,size[0]],aspect = 'auto',cmap = 'jet')
+im = ax1.imshow(sigNSun[:,34:], extent=[134,300, -18,18],aspect = 'auto',cmap = 'jet')
+ax1.set_xlabel('Scan number')
+ax1.set_ylabel('$\\theta,^{\\circ}$')
 
-# from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-# axins = inset_axes(ax2,
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+# axins = inset_axes(ax1,
 #                    width="5%",  # width = 5% of parent_bbox width
 #                    height="50%",  # height : 50%
 #                    loc='lower left',
 #                    bbox_to_anchor=(1.05, 0., 1, 1),
-#                    bbox_transform=ax2.transAxes,
+#                    bbox_transform=ax1.transAxes,
 #                    borderpad=0,
 #                    )
 
-# divider = make_axes_locatable(ax2)
-# cax = divider.append_axes("right", size="5%", pad=0.05)
-# cbar = plt.colorbar(im, cax = cax, orientation='vertical')
+divider = make_axes_locatable(ax1)
+cax = divider.append_axes("right", size="5%", pad=0.05)
+cbar = plt.colorbar(im, cax = cax, orientation='vertical')
 
-# cbar.ax.set_xlabel('$\sigma^0,dB$')
+cbar.ax.set_title('$\sigma^0,dB$')
 
-# plt.savefig('kurt2.pdf', bbox_inches='tight')
+# plt.savefig('imgs/21j.png', bbox_inches='tight')
 
 plt.show()
 

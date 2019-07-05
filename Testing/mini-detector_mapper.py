@@ -10,8 +10,8 @@ from matplotlib import rc
 from matplotlib.backends.backend_pdf import PdfPages
 
 plt.rc('text', usetex = True)
-plt.rc('font', size=13, family = 'serif')
-plt.rc('legend', fontsize=14)
+plt.rc('font', size=18, family = 'serif')
+plt.rc('legend', fontsize=16)
 
 import scipy as sp
 from scipy import signal
@@ -81,28 +81,76 @@ def adjustParameters(parameters,detector,upper,lower):
     return parameters
 
 
-colFlag = np.zeros((size),dtype = bool)
+#### ICE DETECTION ####
 
+# colFlag = np.zeros((size),dtype = bool)
+
+# for i in range(0,size[1]):
+#     try:
+#         new_parameters, covariance = curve_fit(HypApp,thetaNS[:,i],sigNS[:,i], [200,5,0],bounds =([150,2,-np.inf],[500,7,np.inf]) )
+#         diff = np.subtract( sigNS[:,i], HypApp( thetaNS[:,i],new_parameters[0],new_parameters[1],new_parameters[2] ))
+#         err = np.mean( diff**2 ) * 100 / ( np.amax(sigNS[:,i]) - np.amin(sigNS[:,i]) )
+#         if ( new_parameters[0] < 2000 ) & ( new_parameters[0] > 15 ) & ( new_parameters[2] < 100 ) & ( err < 30 ):
+#             colFlag[:,i] = True
+#         else: 
+#             colFlag[:,i] = False
+#     except RuntimeError:
+#         print('Not fitted')
+
+
+#### ICE DETECTION ####
+
+sigNSun = sigNS # dB
+thetaNSun = thetaNS 
+
+sigNS = np.power(10, sigNS*0.1)
+thetaNS = np.tan( thetaNS/180 * np.pi)
+mu = [[],[],[],[]]
+colFlag = np.zeros((size),dtype = bool)
 for i in range(0,size[1]):
-    try:
-        new_parameters, covariance = curve_fit(HypApp,thetaNS[:,i],sigNS[:,i], [200,5,0],bounds =([150,2,-np.inf],[500,7,np.inf]) )
-        diff = np.subtract( sigNS[:,i], HypApp( thetaNS[:,i],new_parameters[0],new_parameters[1],new_parameters[2] ))
-        err = np.mean( diff**2 ) * 100 / ( np.amax(sigNS[:,i]) - np.amin(sigNS[:,i]) )
-        if ( new_parameters[0] < 2000 ) & ( new_parameters[0] > 15 ) & ( new_parameters[2] < 100 ) & ( err < 30 ):
-            colFlag[:,i] = True
-        else: 
-            colFlag[:,i] = False
-    except RuntimeError:
-        print('Not fitted')
+    mu_up_2,mu_up_3,mu_up_4,mu_down = 0,0,0,0
+    m2,m3,m4 = 0,0,0
+    cut_n = i
+    y = sigNS[:,cut_n] # sig_0
+    x = thetaNS[:,cut_n] # tan
+    # moments calculation 
+
+    # mean
+    mean = np.sum([ x[j] * y[j] * np.cos(thetaNSun[j][i])**4  for j in range(0,size[0]) ]) / np.sum([ y[j] * np.cos(thetaNSun[j][i])**4  for j in range(0,size[0]) ]) 
+
+    for j in range(0,size[0]):
+        mu_up_2 +=(x[j]- mean)**2 * y[j] * np.cos(thetaNSun[j][i])**4
+        mu_up_3 += (x[j]- mean)**3 * y[j] * np.cos(thetaNSun[j][i])**4
+        mu_up_4 += (x[j]- mean)**4 * y[j] * np.cos(thetaNSun[j][i])**4
+        mu_down += y[j] * np.cos(thetaNSun[j][i])**4
+
+    dispersion = np.sqrt(mu_up_2/mu_down)
+    skewness = mu_up_3/mu_down / (dispersion)**3
+    kurtosis = mu_up_4/mu_down / (dispersion)**4 - 3 
+    
+    mu[0].append(mean)
+    mu[1].append(dispersion)
+    mu[2].append(skewness)
+    mu[3].append(kurtosis)
+    if kurtosis > 3:
+        colFlag[:,i] = True
+
+
+#### ICE DETECTION END ####
+
+
+
+#### EDGE DETECTION ####
+
 
 parameters = np.zeros(size)  
 detectorBig = np.zeros(size)
 detectorSmall = np.zeros(size)
 maxs = np.zeros(size)    
 cvs = np.zeros(size,dtype = bool) 
-sigNS_inv = 10**(0.1*sigNS) 
+sigNS_inv = 10**(0.1*sigNSun) 
 
-sigNS = sp.ndimage.filters.gaussian_filter(sigNS, 0.5, mode='constant')
+sigNS = sp.ndimage.filters.gaussian_filter(sigNSun, 0.5, mode='constant')
 
 for i in range(0,size[0]):
     #using function .find_peaks
@@ -125,28 +173,31 @@ parameters[23,92] = 1
 
 nMap = np.zeros_like(colFlag)   # This is to copy the array, not link it
 nMap[:] = colFlag[:]            #
-# flag filling
-for i in range(0,size[0]):
-    BorderIndex = np.nonzero(parameters[i,:])
-    BorderIndex = np.append(BorderIndex,size[1])
-    BorderIndex = np.insert(BorderIndex,0,0)
-    zAm=0
-    iAm=0
-    for k in range(0,len(BorderIndex)-1):
-        for m in range(BorderIndex[k],BorderIndex[k+1]):
-            if nMap[i][m] == 0:
-                zAm +=1
-            if nMap[i][m] == 1:
-                iAm +=1
-        Ams = [zAm,iAm]
-        # maxAm = np.amax(Ams)
-        nMap[i,BorderIndex[k]:BorderIndex[k+1]] = np.argmax(Ams)
-        zAm=0
-        iAm=0
 
+#### FLAG FILLING ####
+
+# for i in range(0,size[0]):
+#     BorderIndex = np.nonzero(parameters[i,:])
+#     BorderIndex = np.append(BorderIndex,size[1])
+#     BorderIndex = np.insert(BorderIndex,0,0)
+#     zAm=0
+#     iAm=0
+#     for k in range(0,len(BorderIndex)-1):
+#         for m in range(BorderIndex[k],BorderIndex[k+1]):
+#             if nMap[i][m] == 0:
+#                 zAm +=1
+#             if nMap[i][m] == 1:
+#                 iAm +=1
+#         Ams = [zAm,iAm]
+#         # maxAm = np.amax(Ams)
+#         nMap[i,BorderIndex[k]:BorderIndex[k+1]] = np.argmax(Ams)
+#         zAm=0
+#         iAm=0
+
+#### FLAG FILLING ####
 
 from matplotlib import colors
-cmap = colors.ListedColormap(['#352a86','magenta','k'])
+cmap = colors.ListedColormap(['#352a86','blue','black'])
 # cmap = colors.ListedColormap(['#352a86','#0f5bdd','m'])
 norm = colors.BoundaryNorm([0,0.9,1.2,4], cmap.N)
 
@@ -185,11 +236,17 @@ shapes = sf.shapes()
 records = sf.records()
 length = len(records)
 
-
+LoNS = LoNS[:,30:]
+LaNS = LaNS[:,30:]
+nMap = nMap[:,30:]
+parameters = parameters[:,30:]
+# parameters[0,:] = 1
+# parameters[48,:] = 1
 xm,ym = m(LoNS,LaNS)
-toPlot = nMap + 5*parameters
-iz = plt.scatter(xm[toPlot>0],ym[toPlot>0],25,toPlot[toPlot>0], marker = '.',alpha = 0.7,cmap = cmap,norm=norm,zorder = 6)
-
+toPlot = 5*parameters
+iz = plt.scatter(xm[toPlot>0],ym[toPlot>0],15,toPlot[toPlot>0], marker = '.',alpha = 1,cmap = cmap,norm=norm,zorder = 6)
+plt.plot(xm[0,:],ym[0,:],'k--')
+plt.plot(xm[48,:],ym[48,:],'k--')
 # toolbar.polyPlotShapeFile(m,ax,sf,crs)
 
 
@@ -213,29 +270,30 @@ Boundries=[40, 140, 20, 115]
 
 # %Boundries=[64, 168, 40, 132]; %define boundries of the needed area
 
-# S1_titles={'10.65 GHz V-Pol','10.65 GHz H-Pol','18.7 GHz V-Pol',
-#            '18.7 GHz H-Pol','23.8 GHz V-Pol','36.64 GHz V-Pol',
-#            '36.64 GHz H-Pol','89.0 GHz V-Pol ','89.0 GHz H-Pol'};
+S1_titles={'10.65 GHz V-Pol','10.65 GHz H-Pol','18.7 GHz V-Pol',
+           '18.7 GHz H-Pol','23.8 GHz V-Pol','36.64 GHz V-Pol',
+           '36.64 GHz H-Pol','89.0 GHz V-Pol ','89.0 GHz H-Pol'};
 
-# S2_titles={'166.0 GHz V-Pol','166.0 GHz H-Pol','183.31 +/-3 GHz V-Pol','183.31 +/-7 GHz V-Pol'};
+S2_titles={'166.0 GHz V-Pol','166.0 GHz H-Pol','183.31 +/-3 GHz V-Pol','183.31 +/-7 GHz V-Pol'};
 
 la1 = 40
 la2 = 64
 lo1 = 132
 lo2 = 168
 
-
+# print(TcS1[:,6].shape)
 xm,ym = m(LoS1,LaS1)
-im=plt.scatter(xm,ym,35,TcS1[:,6],cmap = 'jet',alpha = 0.7)
+# im=plt.contour(xm,ym,65,TcS1[:,6])
+im=plt.scatter(xm,ym,65,TcS1[:,6],cmap = 'BuGn',alpha = 1)
 # plt.title(1)
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 cbar = plt.colorbar(im, cax=cax, orientation='vertical')
-cbar.ax.set_xlabel('$T,K$')
+cbar.ax.set_xlabel('$Tb,K$')
 
 
 
-# plt.savefig('map2.pdf', bbox_inches='tight')
+plt.savefig('imgs/52.png', bbox_inches='tight',dpi = 900)
 
 
 
