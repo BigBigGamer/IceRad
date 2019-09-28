@@ -119,9 +119,9 @@ flag[kurtosis>5] = 1
 
 fig = plt.figure(figsize = (20,5))
 
-# ax1 = fig.add_subplot(311)
-# ax11 = fig.add_subplot(312)
-ax1 = fig.add_subplot(111)
+ax1 = fig.add_subplot(311)
+ax11 = fig.add_subplot(312)
+# ax1 = fig.add_subplot(111)
 # ax2 = fig.add_subplot(313)
 
 
@@ -133,7 +133,7 @@ ax1 = fig.add_subplot(111)
 # ax1.grid(which = 'both')
 # ax1.legend()
 
-# ax11.imshow(kurtosis[:,34:], extent=[134,300, -18,18],aspect = 'auto')
+ax11.imshow(kurtosis[:,34:], extent=[134,300, -18,18],aspect = 'auto')
 
 
 im = ax1.imshow(sigNSun[:,34:], extent=[134,300, -18,18],aspect = 'auto',cmap = 'jet')

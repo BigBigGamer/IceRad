@@ -13,6 +13,10 @@ import matplotlib.path as mplPath
 import math
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+import time
+
+start = time.time()
+print('Start')
 path = 'E:\Work\GitHub\IceRad_Data\Radiometer_data\m12y2016\d27m12y2016S014815'
 
 areaS1=np.loadtxt(path+r'\areaS1.txt')
@@ -53,15 +57,17 @@ m.drawparallels(np.arange(40,80,10),labels=[1,1,0,1])
 m.drawmeridians(np.arange(130,170,10),labels=[1,1,0,1])   
 
 
-print(TcS1.shape)
-print(LaS1.shape)
+# print(TcS1.shape)
+# print(LaS1.shape)
 
 xm,ym = m(LoS1,LaS1)
 im=plt.scatter(xm,ym,5,TcS1[:,6],cmap = 'jet')
 # plt.title(1)
-divider = make_axes_locatable(ax)
-cax = divider.append_axes("bottom", size="5%", pad=0.05)
-plt.colorbar(im, cax=cax, orientation='horizontal')
+# divider = make_axes_locatable(ax)
+# cax = divider.append_axes("bottom", size="5%", pad=0.05)
+plt.colorbar(im, ax=ax, orientation='vertical')
+end = time.time()
+print(end-start)
 plt.show()
         #    % for S1 
         #    % 1) 10.65 GHz V-Pol 
